@@ -10,6 +10,7 @@ import (
 
 type Env struct {
 	ServerPort                int    `mapstructure:"server_port"`
+	MongoDbConnUri            string `mapstructure:"mongo_db_conn_uri"`
 	AccessControlAllowOrigin  string `mapstructure:"access_control_allow_origin"`
 	AccessControlAllowHeaders string `mapstructure:"access_control_allow_headers"`
 }

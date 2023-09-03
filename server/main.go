@@ -33,9 +33,12 @@ func Listen(container container.Container) error {
 		writer.WriteHeader(http.StatusNoContent)
 	})
 
-	router.GET("/", corsMiddleware(func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-		w.Write([]byte("Hello World"))
-	}))
+	router.POST("/add", corsMiddleware(AddHandler(container)))
+	router.GET("/list", corsMiddleware(ListHandler(container)))
+	router.POST("/edit", corsMiddleware(EditHandler(container)))
+	router.DELETE("/delete", corsMiddleware(DeleteHandler(container)))
+
+	fmt.Println(fmt.Sprintf("Server listening on port: %d", env.ServerPort))
 
 	return http.ListenAndServe(fmt.Sprintf(":%d", env.ServerPort), router)
 }
