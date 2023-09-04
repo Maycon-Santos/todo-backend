@@ -7,6 +7,7 @@ import (
 
 	"github.com/Maycon-Santos/test-brand-monitor-backend/container"
 	"github.com/Maycon-Santos/test-brand-monitor-backend/process"
+	"github.com/Maycon-Santos/test-brand-monitor-backend/server/auth"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -20,6 +21,7 @@ func Listen(container container.Container) error {
 
 	router := httprouter.New()
 
+	authGetDataMiddleware := auth.GetDataMiddleware(container)
 	corsMiddleware := CORSMiddleware(container)
 
 	router.GlobalOPTIONS = http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
@@ -33,10 +35,15 @@ func Listen(container container.Container) error {
 		writer.WriteHeader(http.StatusNoContent)
 	})
 
-	router.POST("/add", corsMiddleware(AddHandler(container)))
-	router.GET("/list", corsMiddleware(ListHandler(container)))
-	router.POST("/edit", corsMiddleware(EditHandler(container)))
-	router.DELETE("/delete", corsMiddleware(DeleteHandler(container)))
+	router.POST("/sign_in", corsMiddleware(SignInHandler(container)))
+	router.POST("/sign_up", corsMiddleware(SignUpHandler(container)))
+	router.GET("/user_data", corsMiddleware(authGetDataMiddleware(UserDataHandler(container))))
+	router.GET("/is_authenticated", corsMiddleware(isAuthenticatedHandler(container)))
+
+	router.POST("/add", corsMiddleware(authGetDataMiddleware(AddHandler(container))))
+	router.GET("/list", corsMiddleware(authGetDataMiddleware(ListHandler(container))))
+	router.POST("/edit", corsMiddleware(authGetDataMiddleware(EditHandler(container))))
+	router.DELETE("/delete", corsMiddleware(authGetDataMiddleware(DeleteHandler(container))))
 
 	fmt.Println(fmt.Sprintf("Server listening on port: %d", env.ServerPort))
 

@@ -24,6 +24,8 @@ func DeleteHandler(container container.Container) httprouter.Handle {
 	}
 
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+		userID := p.ByName("user_id")
+
 		var requestBody deleteRequestBody
 
 		if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
@@ -33,7 +35,7 @@ func DeleteHandler(container container.Container) httprouter.Handle {
 			return
 		}
 
-		err := taskRepository.Delete(requestBody.ID)
+		err := taskRepository.Delete(userID, requestBody.ID)
 		if err != nil {
 			log.Fatal(err)
 		}

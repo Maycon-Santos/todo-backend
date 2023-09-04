@@ -24,7 +24,9 @@ func ListHandler(container container.Container) httprouter.Handle {
 	}
 
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-		taskList, err := taskRepository.GetAll()
+		userID := p.ByName("user_id")
+
+		taskList, err := taskRepository.GetAll(userID)
 		if err != nil {
 			log.Fatal(err)
 		}

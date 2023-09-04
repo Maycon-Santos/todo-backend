@@ -18,6 +18,7 @@ type CheckItem struct {
 
 type Task struct {
 	ID          string `bson:"_id,omitempty"`
+	UserID      string
 	Done        bool
 	Title       string
 	Description string
@@ -25,11 +26,11 @@ type Task struct {
 }
 
 type TaskRepository interface {
-	GetAll() (results []Task, err error)
-	GetByID(id string) (*Task, error)
-	Add(title string) (id string, err error)
-	Edit(task Task) error
-	Delete(id string) error
+	GetAll(userID string) (results []Task, err error)
+	GetByID(userID string, id string) (*Task, error)
+	Add(userID string, title string) (id string, err error)
+	Edit(userID string, task Task) error
+	Delete(userID string, id string) error
 }
 
 type taskRepository struct {
@@ -44,13 +45,13 @@ func NewTaskRepository(conn *mongo.Client) TaskRepository {
 	}
 }
 
-func (u taskRepository) GetAll() (results []Task, err error) {
+func (u taskRepository) GetAll(userID string) (results []Task, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	opts := options.Find().SetSort(bson.D{{Key: "createdAt", Value: -1}})
 
-	cursor, err := u.collection.Find(ctx, bson.D{}, opts)
+	cursor, err := u.collection.Find(ctx, bson.D{{Key: "userID", Value: userID}}, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -66,13 +67,13 @@ func (u taskRepository) GetAll() (results []Task, err error) {
 	return results, nil
 }
 
-func (t taskRepository) GetByID(id string) (*Task, error) {
+func (t taskRepository) GetByID(userID string, id string) (*Task, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	var task Task
 
-	err := t.collection.FindOne(ctx, bson.M{"_id": id}).Decode(&task)
+	err := t.collection.FindOne(ctx, bson.M{"_id": id, "userID": userID}).Decode(&task)
 	if err != nil {
 		return nil, err
 	}
@@ -80,11 +81,18 @@ func (t taskRepository) GetByID(id string) (*Task, error) {
 	return &task, nil
 }
 
-func (t taskRepository) Add(title string) (id string, err error) {
+func (t taskRepository) Add(userID string, title string) (id string, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	res, err := t.collection.InsertOne(ctx, bson.D{{Key: "title", Value: title}, {Key: "createdAt", Value: primitive.NewDateTimeFromTime(time.Now())}})
+	res, err := t.collection.InsertOne(
+		ctx,
+		bson.D{
+			{Key: "userID", Value: userID},
+			{Key: "title", Value: title},
+			{Key: "createdAt", Value: primitive.NewDateTimeFromTime(time.Now())},
+		},
+	)
 	if err != nil {
 		return "", err
 	}
@@ -92,7 +100,7 @@ func (t taskRepository) Add(title string) (id string, err error) {
 	return res.InsertedID.(primitive.ObjectID).Hex(), nil
 }
 
-func (t taskRepository) Edit(task Task) error {
+func (t taskRepository) Edit(userID string, task Task) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -105,10 +113,16 @@ func (t taskRepository) Edit(task Task) error {
 
 	_, err = t.collection.UpdateOne(
 		ctx,
-		bson.D{{
-			Key:   "_id",
-			Value: objID,
-		}},
+		bson.D{
+			{
+				Key:   "_id",
+				Value: objID,
+			},
+			{
+				Key:   "userID",
+				Value: userID,
+			},
+		},
 		bson.D{
 			{
 				Key:   "$set",
@@ -123,7 +137,7 @@ func (t taskRepository) Edit(task Task) error {
 	return nil
 }
 
-func (t taskRepository) Delete(id string) error {
+func (t taskRepository) Delete(userID string, id string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -132,7 +146,7 @@ func (t taskRepository) Delete(id string) error {
 		return err
 	}
 
-	_, err = t.collection.DeleteOne(ctx, bson.M{"_id": objID})
+	_, err = t.collection.DeleteOne(ctx, bson.M{"_id": objID, "userID": userID})
 	if err != nil {
 		return err
 	}

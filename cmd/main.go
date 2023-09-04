@@ -16,12 +16,17 @@ func main() {
 	}
 
 	mongoConn := db.NewMongoConnection(env)
+	sqliteConn, err := db.NewSQLiteConnection(env)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	taskRepository := db.NewTaskRepository(mongoConn)
+	userRepository := db.NewUserRepository(sqliteConn)
 
 	dependenciesContainer := container.New()
 
-	err = dependenciesContainer.Inject(env, &taskRepository)
+	err = dependenciesContainer.Inject(env, &taskRepository, &userRepository)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -20,6 +20,8 @@ func EditHandler(container container.Container) httprouter.Handle {
 	}
 
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+		userID := p.ByName("user_id")
+
 		var requestBody Task
 
 		if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
@@ -44,7 +46,7 @@ func EditHandler(container container.Container) httprouter.Handle {
 			})
 		}
 
-		err := taskRepository.Edit(task)
+		err := taskRepository.Edit(userID, task)
 		if err != nil {
 			log.Fatal(err)
 		}

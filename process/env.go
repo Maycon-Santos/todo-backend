@@ -10,9 +10,12 @@ import (
 
 type Env struct {
 	ServerPort                int    `mapstructure:"server_port"`
+	SecretKey                 string `mapstructure:"secret_key"`
+	DBFile                    string `mapstructure:"db_file"`
 	MongoDbConnUri            string `mapstructure:"mongo_db_conn_uri"`
 	AccessControlAllowOrigin  string `mapstructure:"access_control_allow_origin"`
 	AccessControlAllowHeaders string `mapstructure:"access_control_allow_headers"`
+	PasswordsEncryptCost      int    `mapstructure:"passwords_encrypt_cost"`
 }
 
 func NewEnv() (*Env, error) {

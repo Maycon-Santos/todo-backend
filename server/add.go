@@ -24,6 +24,8 @@ func AddHandler(container container.Container) httprouter.Handle {
 	}
 
 	return func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+		userID := p.ByName("user_id")
+
 		var requestBody addRequestBody
 
 		if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
@@ -33,7 +35,7 @@ func AddHandler(container container.Container) httprouter.Handle {
 			return
 		}
 
-		id, err := taskRepository.Add(requestBody.Title)
+		id, err := taskRepository.Add(userID, requestBody.Title)
 		if err != nil {
 			log.Fatal(err)
 		}
